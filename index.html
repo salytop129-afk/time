@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alarm Beta — Платный будильник</title>
+
+<style>
+    * {
+        box-sizing: border-box;
+        font-family: Inter, Arial, sans-serif;
+    }
+
+    body {
+        margin: 0;
+        min-height: 100vh;
+        background:
+            radial-gradient(circle at top, #30205c 0%, #11111d 45%, #08080d 100%);
+        color: white;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+    }
+
+    .app {
+        width: 100%;
+        max-width: 520px;
+        background: rgba(25, 25, 40, .92);
+        border: 1px solid rgba(255,255,255,.1);
+        border-radius: 28px;
+        padding: 25px;
+        box-shadow: 0 25px 80px rgba(0,0,0,.45);
+    }
+
+    .logo {
+        text-align: center;
+        font-size: 42px;
+        margin-bottom: 5px;
+    }
+
+    h1 {
+        text-align: center;
+        margin: 0;
+        font-size: 28px;
+    }
+
+    .beta {
+        display: block;
+        width: max-content;
+        margin: 8px auto 25px;
+        padding: 5px 10px;
+        border-radius: 20px;
+        background: #ffcc00;
+        color: #171717;
+        font-size: 12px;
+        font-weight: 800;
+    }
+
+    .clock {
+        text-align: center;
+        font-size: 54px;
+        font-weight: 800;
+        letter-spacing: 2px;
+        margin: 10px 0 25px;
+    }
+
+    .tabs {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 20px;
+    }
+
+    .tab {
+        flex: 1;
+        border: 0;
+        padding: 13px;
+        border-radius: 14px;
+        background: #29293b;
+        color: #aaa;
+        cursor: pointer;
+        font-weight: 700;
+    }
+
+    .tab.active {
+        background: #7c4dff;
+        color: white;
+    }
+
+    .panel {
+        display: none;
+    }
+
+    .panel.active {
+        display: block;
+    }
+
+    label {
+        display: block;
+        margin: 12px 0 7px;
+        color: #bbb;
+        font-size: 14px;
+    }
+
+    input {
+        width: 100%;
+        border: 1px solid #414154;
+        background: #171722;
+        color: white;
+        padding: 15px;
+        border-radius: 14px;
+        outline: none;
+        font-size: 18px;
+    }
+
+    input:focus {
+        border-color: #8c6cff;
+    }
+
+    .main-btn {
+        width: 100%;
+        border: 0;
+        padding: 16px;
+        margin-top: 18px;
+        border-radius: 15px;
+        background: linear-gradient(135deg, #7c4dff, #a66cff);
+        color: white;
+        font-size: 17px;
+        font-weight: 800;
+        cursor: pointer;
+    }
+
+    .main-btn:hover {
+        filter: brightness(1.1);
+    }
+
+    .status {
+        text-align: center;
+        margin-top: 18px;
+        min-height: 25px;
+        color: #aaa;
+    }
+
+    .alarm-card {
+        margin-top: 20px;
+        padding: 18px;
+        background: #191927;
+        border: 1px solid #353548;
+        border-radius: 18px;
+        display: none;
+    }
+
+    .alarm-card.show {
+        display: block;
+    }
+
+    .alarm-time {
+        font-size: 32px;
+        font-weight: 800;
+    }
+
+    .danger {
+        color: #ff7272;
+    }
+
+    /* PAYMENT MODAL */
+
+    .overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,.82);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+        z-index: 100;
+        backdrop-filter: blur(8px);
+    }
+
+    .overlay.show {
+        display: flex;
+    }
+
+    .modal {
+        width: 100%;
+        max-width: 440px;
+        background: #202031;
+        border: 1px solid #4a4960;
+        border-radius: 25px;
+        padding: 25px;
+        box-shadow: 0 25px 100px rgba(0,0,0,.7);
+        animation: pop .25s ease;
+    }
+
+    @keyframes pop {
+        from {
+            transform: scale(.85);
+            opacity: 0;
+        }
+        to {
+            transform: scale(1);
+            opacity: 1;
+        }
+    }
+
+    .warning {
+        text-align: center;
+        font-size: 55px;
+    }
+
+    .modal h2 {
+        text-align: center;
+        margin: 5px 0;
+    }
+
+    .price {
+        text-align: center;
+        font-size: 32px;
+        font-weight: 900;
+        color: #ffcc00;
+        margin: 15px 0;
+    }
+
+    .fake-note {
+        background: #29293b;
+        border-radius: 12px;
+        padding: 10px;
+        font-size: 12px;
+        color: #aaa;
+        text-align: center;
+        margin-bottom: 15px;
+    }
+
+    .pay-btn {
+        width: 100%;
+        border: 0;
+        padding: 15px;
+        background: #25c76b;
+        color: white;
+        font-size: 17px;
+        font-weight: 800;
+        border-radius: 14px;
+        cursor: pointer;
+        margin-top: 12px;
+    }
+
+    .cancel-btn {
+        width: 100%;
+        border: 0;
+        padding: 12px;
+        background: transparent;
+        color: #888;
+        cursor: pointer;
+        margin-top: 8px;
+    }
+
+    .success {
+        text-align: center;
+        display: none;
+    }
+
+    .success-icon {
+        font-size: 70px;
+    }
+
+    .success h2 {
+        color: #35db7c;
+    }
+
+    .small {
+        font-size: 12px;
+        color: #777;
+        text-align: center;
+        margin-top: 18px;
+    }
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+    <div class="logo">⏰</div>
+    <h1>Alarm Beta</h1>
+    <span class="beta">BETA • PREMIUM ONLY 😈</span>
+
+    <div class="clock" id="clock">00:00:00</div>
+
+    <div class="tabs">
+        <button class="tab active" onclick="switchTab('alarm', this)">
+            Будильник
+        </button>
+
+        <button class="tab" onclick="switchTab('timer', this)">
+            Таймер
+        </button>
+    </div>
+
+    <!-- ALARM -->
+
+    <div class="panel active" id="alarmPanel">
+
+        <label>Время будильника</label>
+
+        <input type="time" id="alarmTime">
+
+        <button class="main-btn" onclick="setAlarm()">
+            🔔 Поставить будильник
+        </button>
+
+        <div class="status" id="alarmStatus"></div>
+
+        <div class="alarm-card" id="alarmCard">
+            <div>Активный будильник</div>
+            <div class="alarm-time" id="alarmDisplay">00:00</div>
+            <div>🔒 Отключение — Premium</div>
+        </div>
+
+    </div>
+
+    <!-- TIMER -->
+
+    <div class="panel" id="timerPanel">
+
+        <label>Минуты</label>
+        <input type="number" id="minutes" min="0" value="1">
+
+        <label>Секунды</label>
+        <input type="number" id="seconds" min="0" max="59" value="0">
+
+        <button class="main-btn" onclick="startTimer()">
+            ⏱ Запустить таймер
+        </button>
+
+        <div class="status" id="timerStatus"></div>
+
+        <div class="alarm-card" id="timerCard">
+            <div>Таймер запущен</div>
+            <div class="alarm-time" id="timerDisplay">00:00</div>
+            <div>🔒 Отключение — Premium</div>
+        </div>
+
+    </div>
+
+    <div class="small">
+        Alarm Beta © 2026 — абсолютно ненастоящий сервис 😄
+    </div>
+
+</div>
+
+
+<!-- PAYMENT MODAL -->
+
+<div class="overlay" id="paymentOverlay">
+
+    <div class="modal">
+
+        <div id="paymentScreen">
+
+            <div class="warning">🚨</div>
+
+            <h2>БУДИЛЬНИК ЗВОНИТ!</h2>
+
+            <div class="price">€0.99</div>
+
+            <div class="fake-note">
+                ⚠️ Демо-оплата. Это НЕ настоящий платёж.
+                Данные никуда не отправляются и не сохраняются.
+                Используйте любые тестовые значения.
+            </div>
+
+            <label>Номер карты (тест)</label>
+            <input
+                id="card"
+                placeholder="0000 0000 0000 0000"
+                maxlength="19"
+                inputmode="numeric"
+            >
+
+            <label>Срок действия</label>
+            <input
+                id="expiry"
+                placeholder="MM/YY"
+                maxlength="5"
+            >
+
+            <label>CVV</label>
+            <input
+                id="cvv"
+                placeholder="000"
+                maxlength="3"
+                inputmode="numeric"
+            >
+
+            <button class="pay-btn" onclick="fakePayment()">
+                💳 Оплатить €0.99
+            </button>
+
+            <button class="cancel-btn" onclick="closePayment()">
+                Оставить будильник звонить
+            </button>
+
+        </div>
+
+
+        <div class="success" id="successScreen">
+
+            <div class="success-icon">✅</div>
+
+            <h2>ОПЛАЧЕНО!</h2>
+
+            <p>Premium активирован.</p>
+            <p>Будильник успешно остановлен.</p>
+
+            <button class="main-btn" onclick="finishPayment()">
+                Отлично
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+let alarmTime = null;
+let timerEnd = null;
+let timerInterval = null;
+let alarmRinging = false;
+
+
+/* CLOCK */
+
+function updateClock() {
+
+    const now = new Date();
+
+    const h = String(now.getHours()).padStart(2, "0");
+    const m = String(now.getMinutes()).padStart(2, "0");
+    const s = String(now.getSeconds()).padStart(2, "0");
+
+    document.getElementById("clock").textContent =
+        `${h}:${m}:${s}`;
+
+
+    // Alarm
+
+    if (alarmTime && !alarmRinging) {
+
+        const current =
+            `${h}:${m}`;
+
+        if (current === alarmTime) {
+
+            alarmRinging = true;
+
+            document.getElementById("alarmStatus").textContent =
+                "🔊 Будильник сработал!";
+
+            ringAlarm();
+
+        }
+    }
+
+
+    // Timer
+
+    if (timerEnd) {
+
+        const remaining =
+            timerEnd - Date.now();
+
+        if (remaining <= 0) {
+
+            timerEnd = null;
+
+            document.getElementById("timerDisplay").textContent =
+                "00:00";
+
+            document.getElementById("timerStatus").textContent =
+                "🔊 Таймер завершён!";
+
+            ringAlarm();
+
+        } else {
+
+            const totalSeconds =
+                Math.ceil(remaining / 1000);
+
+            const min =
+                Math.floor(totalSeconds / 60);
+
+            const sec =
+                totalSeconds % 60;
+
+            document.getElementById("timerDisplay").textContent =
+                `${String(min).padStart(2,"0")}:${String(sec).padStart(2,"0")}`;
+        }
+    }
+}
+
+setInterval(updateClock, 1000);
+updateClock();
+
+
+/* TABS */
+
+function switchTab(tab, button) {
+
+    document.querySelectorAll(".tab")
+        .forEach(x => x.classList.remove("active"));
+
+    button.classList.add("active");
+
+    document.querySelectorAll(".panel")
+        .forEach(x => x.classList.remove("active"));
+
+    if (tab === "alarm") {
+
+        document.getElementById("alarmPanel")
+            .classList.add("active");
+
+    } else {
+
+        document.getElementById("timerPanel")
+            .classList.add("active");
+
+    }
+}
+
+
+/* ALARM */
+
+function setAlarm() {
+
+    const value =
+        document.getElementById("alarmTime").value;
+
+    if (!value) {
+
+        document.getElementById("alarmStatus").textContent =
+            "Выбери время.";
+
+        return;
+    }
+
+    alarmTime = value;
+    alarmRinging = false;
+
+    document.getElementById("alarmDisplay").textContent =
+        value;
+
+    document.getElementById("alarmCard")
+        .classList.add("show");
+
+    document.getElementById("alarmStatus").textContent =
+        "✓ Будильник установлен.";
+
+}
+
+
+/* TIMER */
+
+function startTimer() {
+
+    let minutes =
+        Number(document.getElementById("minutes").value) || 0;
+
+    let seconds =
+        Number(document.getElementById("seconds").value) || 0;
+
+    const total =
+        minutes * 60 + seconds;
+
+    if (total <= 0) {
+
+        document.getElementById("timerStatus").textContent =
+            "Укажи время больше нуля.";
+
+        return;
+    }
+
+    timerEnd =
+        Date.now() + total * 1000;
+
+    document.getElementById("timerCard")
+        .classList.add("show");
+
+    document.getElementById("timerStatus").textContent =
+        "✓ Таймер запущен.";
+
+}
+
+
+/* ALARM SOUND */
+
+function ringAlarm() {
+
+    document.getElementById("paymentOverlay")
+        .classList.add("show");
+
+    // Вибрация, если браузер поддерживает
+    if (navigator.vibrate) {
+
+        navigator.vibrate([
+            500, 300, 500, 300, 500
+        ]);
+
+    }
+
+    // Попытка короткого звука через Web Audio
+    try {
+
+        const AudioContext =
+            window.AudioContext ||
+            window.webkitAudioContext;
+
+        const ctx = new AudioContext();
+
+        const oscillator =
+            ctx.createOscillator();
+
+        const gain =
+            ctx.createGain();
+
+        oscillator.frequency.value = 880;
+        oscillator.type = "sine";
+
+        oscillator.connect(gain);
+        gain.connect(ctx.destination);
+
+        gain.gain.setValueAtTime(
+            0.15,
+            ctx.currentTime
+        );
+
+        oscillator.start();
+
+        oscillator.stop(
+            ctx.currentTime + 0.8
+        );
+
+    } catch (e) {}
+
+}
+
+
+/* PAYMENT */
+
+function fakePayment() {
+
+    const card =
+        document.getElementById("card").value.trim();
+
+    const expiry =
+        document.getElementById("expiry").value.trim();
+
+    const cvv =
+        document.getElementById("cvv").value.trim();
+
+
+    if (!card || !expiry || !cvv) {
+
+        alert(
+            "Для демо введи любые тестовые значения 🙂"
+        );
+
+        return;
+    }
+
+
+    // Это только визуальная имитация.
+    // Никаких данных никуда не отправляется.
+
+    document.getElementById("paymentScreen")
+        .style.display = "none";
+
+    document.getElementById("successScreen")
+        .style.display = "block";
+
+}
+
+
+/* FINISH */
+
+function finishPayment() {
+
+    alarmTime = null;
+    timerEnd = null;
+    alarmRinging = false;
+
+    document.getElementById("paymentOverlay")
+        .classList.remove("show");
+
+    document.getElementById("successScreen")
+        .style.display = "none";
+
+    document.getElementById("paymentScreen")
+        .style.display = "block";
+
+    document.getElementById("alarmCard")
+        .classList.remove("show");
+
+    document.getElementById("timerCard")
+        .classList.remove("show");
+
+    document.getElementById("alarmStatus").textContent =
+        "💳 Оплачено — будильник остановлен.";
+
+    document.getElementById("timerStatus").textContent =
+        "💳 Оплачено — таймер остановлен.";
+
+}
+
+
+/* CLOSE PAYMENT */
+
+function closePayment() {
+
+    document.getElementById("paymentOverlay")
+        .classList.remove("show");
+
+}
+
+
+/* CARD FORMATTING */
+
+document.getElementById("card")
+    .addEventListener("input", function(e) {
+
+        let value =
+            e.target.value
+                .replace(/\D/g, "")
+                .slice(0, 16);
+
+        e.target.value =
+            value.replace(/(.{4})/g, "$1 ")
+                .trim();
+
+    });
+
+
+document.getElementById("expiry")
+    .addEventListener("input", function(e) {
+
+        let value =
+            e.target.value
+                .replace(/\D/g, "")
+                .slice(0, 4);
+
+        if (value.length >= 3) {
+
+            value =
+                value.slice(0,2) +
+                "/" +
+                value.slice(2);
+
+        }
+
+        e.target.value = value;
+
+    });
+
+</script>
+
+</body>
+</html>
